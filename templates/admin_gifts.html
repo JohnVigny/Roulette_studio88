@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listes de cadeaux</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="admin-container">
+
+    <div class="admin-topbar admin-topbar-right">
+        <a href="/admin" class="gold-button admin-top-button">Retour admin</a>
+    </div>
+
+    <h1>Listes de cadeaux</h1>
+
+    <form method="POST" class="admin-inline-form">
+        <input type="hidden" name="action" value="create_list">
+        <input type="text" name="list_name" placeholder="Nom de la liste" required>
+        <button type="submit" class="gold-button">Créer</button>
+    </form>
+
+    <div class="gift-lists-column">
+        {% for list in lists %}
+        <div class="gift-list-card">
+            <form method="POST" class="gift-list-delete-form delete-list-form">
+                <input type="hidden" name="action" value="delete_list">
+                <input type="hidden" name="list_id" value="{{ list.id }}">
+                <button type="button" class="gift-list-close-button delete-list-button" aria-label="Supprimer">×</button>
+            </form>
+
+            <div class="gift-list-card-title">{{ list.name }}</div>
+
+            <a href="/admin/gifts/{{ list.id }}" class="gift-list-edit-button">
+                Modifier
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<div class="custom-modal" id="deleteListModal">
+    <div class="custom-modal-backdrop"></div>
+    <div class="custom-modal-box custom-modal-box-gold">
+        <p>Voulez-vous vraiment supprimer cette liste ? Cette action est irrévocable.</p>
+        <div class="custom-modal-actions">
+            <button type="button" class="dark-modal-button" id="confirmDeleteList">Oui</button>
+            <button type="button" class="dark-modal-button" id="cancelDeleteList">Non</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let pendingDeleteListForm = null;
+
+const deleteListModal = document.getElementById("deleteListModal");
+const confirmDeleteList = document.getElementById("confirmDeleteList");
+const cancelDeleteList = document.getElementById("cancelDeleteList");
+
+document.querySelectorAll(".delete-list-button").forEach(button => {
+    button.addEventListener("click", function () {
+        pendingDeleteListForm = this.closest(".delete-list-form");
+        deleteListModal.classList.add("show");
+    });
+});
+
+confirmDeleteList.addEventListener("click", function () {
+    if (pendingDeleteListForm) {
+        pendingDeleteListForm.submit();
+    }
+});
+
+cancelDeleteList.addEventListener("click", function () {
+    pendingDeleteListForm = null;
+    deleteListModal.classList.remove("show");
+});
+
+deleteListModal.querySelector(".custom-modal-backdrop").addEventListener("click", function () {
+    pendingDeleteListForm = null;
+    deleteListModal.classList.remove("show");
+});
+</script>
+
+</body>
+</html>

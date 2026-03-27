@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accès clients</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="admin-container admin-list-detail-page">
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="success-message">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="admin-topbar admin-detail-topbar">
+        <a href="/admin" class="gold-button admin-top-button">Retour admin</a>
+
+        <form method="POST" style="margin:0;">
+            <input type="hidden" name="action" value="cleanup_tests">
+            <button type="submit" class="gold-button admin-top-button">
+                Nettoyer les tests
+            </button>
+            <button 
+                type="button"
+                class="gold-button"
+                onclick="confirmResetReviews()"
+            >
+                Réinitialiser les avis Google
+            </button>
+        </form>
+    </div>
+
+    <h1>Accès clients</h1>
+
+    <div class="admin-section-card">
+        <h3>Créer un accès client</h3>
+
+        <form method="POST" class="admin-inline-form admin-inline-form-new-gift">
+            <input type="hidden" name="action" value="create_access">
+
+            <input type="text" name="first_name" placeholder="Prénom" required>
+            <input type="text" name="last_name" placeholder="Nom" required>
+            <input type="email" name="email" placeholder="Adresse mail" required>
+
+            <div class="file-input-group">
+                <label for="destination_id" class="file-input-label">Destination</label>
+                <select name="destination_id" id="destination_id" class="admin-select" required>
+                    <option value="">Choisir</option>
+                    {% for destination in destinations %}
+                        <option value="{{ destination.id }}">{{ destination.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="file-input-group">
+                <label for="gift_list_id" class="file-input-label">Liste de cadeaux</label>
+                <select name="gift_list_id" id="gift_list_id" class="admin-select" required>
+                    <option value="">Choisir</option>
+                    {% for gift_list in gift_lists %}
+                        <option value="{{ gift_list.id }}">{{ gift_list.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="gold-button">Créer l’accès</button>
+        </form>
+
+        <p class="result-note" style="margin-top:18px;">
+            L’adresse <strong>{{ test_unlimited_email }}</strong> reste illimitée pour tes essais.
+            Le bouton <strong>Nettoyer les tests</strong> supprime ses accès et son historique.
+        </p>
+    </div>
+
+    <div class="admin-section-card">
+        <div class="access-table-header">
+            <h3>Accès générés</h3>
+
+            <div class="access-filters">
+                <input
+                    type="text"
+                    id="accessSearchInput"
+                    class="access-search-input"
+                    placeholder="Rechercher par nom, email, destination, liste..."
+                >
+
+                <select id="accessStatusFilter" class="admin-select access-status-filter">
+                    <option value="all">Tous les statuts</option>
+                    <option value="illimité">Illimité</option>
+                    <option value="actif">Actif</option>
+                    <option value="utilisé">Utilisé</option>
+                    <option value="inactif">Inactif</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="admin-table-wrap">
+            <table>
+                <tr>
+                    <th>Client</th>
+                    <th>Email</th>
+                    <th>Destination</th>
+                    <th>Liste</th>
+                    <th>Statut</th>
+                    <th>Ouvrir</th>
+                    <th>Copier</th>
+                    <th>Activer / Bloquer</th>
+                    <th>Réinitialiser</th>
+                    <th>Supprimer</th>
+                </tr>
+
+                {% for link in access_links %}
+                {% set link_status =
+                    'illimité' if link.email|lower == test_unlimited_email|lower
+                    else 'utilisé' if link.is_used
+                    else 'actif' if link.is_active
+                    else 'inactif'
+                %}
+                <tr
+                    class="access-row"
+                    data-search="{{ (link.first_name ~ ' ' ~ link.last_name ~ ' ' ~ link.email ~ ' ' ~ (link.destination_label or '') ~ ' ' ~ (link.gift_list_name or ''))|lower }}"
+                    data-status="{{ link_status }}"
+                >
+                    <td>{{ link.first_name }} {{ link.last_name }}</td>
+                    <td>{{ link.email }}</td>
+                    <td>{{ link.destination_label }}</td>
+                    <td>{{ link.gift_list_name or '—' }}</td>
+                    <td>
+                        {% if link.email|lower == test_unlimited_email|lower %}
+                            Illimité
+                        {% elif link.is_used %}
+                            Utilisé
+                        {% elif link.is_active %}
+                            Actif
+                        {% else %}
+                            Inactif
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="gift-list-edit-button" href="/play/{{ link.token }}" target="_blank">Ouvrir</a>
+                    </td>
+                    <td>
+                        <button
+                            type="button"
+                            class="gift-list-edit-button copy-link-button"
+                            data-link="{{ request.host_url.rstrip('/') }}/play/{{ link.token }}"
+                        >
+                            Copier le lien
+                        </button>
+                    </td>
+                    <td>
+                        <form method="POST" style="margin:0;">
+                            <input type="hidden" name="action" value="toggle_access">
+                            <input type="hidden" name="access_id" value="{{ link.id }}">
+                            {% if link.is_active %}
+                                <button type="submit" class="gift-list-edit-button danger-button">Désactiver</button>
+                            {% else %}
+                                <button type="submit" class="gift-list-edit-button reactivate-button">Réactiver</button>
+                            {% endif %}
+                        </form>
+                    </td>
+                    <td>
+                        <form method="POST" style="margin:0;">
+                            <input type="hidden" name="action" value="reset_access">
+                            <input type="hidden" name="access_id" value="{{ link.id }}">
+                            <button type="submit" class="gift-list-edit-button reset-button">Réinitialiser</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="POST" style="margin:0;" onsubmit="return confirm('Supprimer cet accès ? Cette action est irrévocable.');">
+                            <input type="hidden" name="action" value="delete_access">
+                            <input type="hidden" name="access_id" value="{{ link.id }}">
+                            <button type="submit" class="gift-list-edit-button delete-button">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.querySelectorAll(".copy-link-button").forEach(button => {
+    button.addEventListener("click", async function () {
+        const link = this.dataset.link;
+        const originalText = this.textContent;
+
+        try {
+            await navigator.clipboard.writeText(link);
+            this.textContent = "Lien copié";
+            this.classList.add("copy-success");
+        } catch (error) {
+            const tempInput = document.createElement("input");
+            tempInput.value = link;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+
+            this.textContent = "Lien copié";
+            this.classList.add("copy-success");
+        }
+
+        setTimeout(() => {
+            this.textContent = originalText;
+            this.classList.remove("copy-success");
+        }, 1800);
+    });
+});
+
+const accessSearchInput = document.getElementById("accessSearchInput");
+const accessStatusFilter = document.getElementById("accessStatusFilter");
+const accessRows = document.querySelectorAll(".access-row");
+
+function filterAccessRows() {
+    const searchValue = (accessSearchInput.value || "").trim().toLowerCase();
+    const statusValue = accessStatusFilter.value;
+
+    accessRows.forEach(row => {
+        const rowSearch = row.dataset.search || "";
+        const rowStatus = row.dataset.status || "";
+
+        const matchesSearch = searchValue === "" || rowSearch.includes(searchValue);
+        const matchesStatus = statusValue === "all" || rowStatus === statusValue;
+
+        row.style.display = (matchesSearch && matchesStatus) ? "" : "none";
+    });
+}
+
+if (accessSearchInput) {
+    accessSearchInput.addEventListener("input", filterAccessRows);
+}
+
+if (accessStatusFilter) {
+    accessStatusFilter.addEventListener("change", filterAccessRows);
+}
+
+</script>
+
+</body>
+</html>
+
+<div id="customPopup" class="popup-overlay hidden">
+    <div class="popup-box">
+        <p id="popupText">Confirmer l'action ?</p>
+
+        <div class="popup-actions">
+            <button id="popupCancel">Annuler</button>
+            <button id="popupConfirm">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openPopup(message, callback) {
+    const popup = document.getElementById("customPopup");
+    const text = document.getElementById("popupText");
+
+    text.innerText = message;
+    popup.classList.remove("hidden");
+
+    document.getElementById("popupCancel").onclick = () => {
+        popup.classList.add("hidden");
+    };
+
+    document.getElementById("popupConfirm").onclick = () => {
+        popup.classList.add("hidden");
+        callback();
+    };
+}
+</script>
+
+<script>
+function confirmResetReviews() {
+    openPopup("Réinitialiser tous les avis Google ?", function() {
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "/admin/links";
+
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "action";
+        input.value = "reset_reviews";
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    });
+}
+</script>

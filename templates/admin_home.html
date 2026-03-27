@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Studio 88</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="admin-container">
+
+    <h1>Administration</h1>
+    <p class="subtitle">Gestion de la roulette Studio 88</p>
+
+    <div class="admin-grid">
+
+        <a href="/admin/gifts" class="admin-card">
+            🎁
+            <h2>Listes de cadeaux</h2>
+            <p>Créer, modifier et gérer les cadeaux</p>
+        </a>
+
+        <a href="/admin/links" class="admin-card">
+            🔗
+            <h2>Accès clients</h2>
+            <p>Générer les liens de participation</p>
+        </a>
+
+        <a href="/admin/history" class="admin-card">
+            📊
+            <h2>Historique</h2>
+            <p>Consulter les participations</p>
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

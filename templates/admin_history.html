@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="admin-container admin-list-detail-page">
+
+    <div class="admin-topbar admin-detail-topbar">
+        <a href="/admin" class="gold-button admin-top-button">Retour admin</a>
+    </div>
+
+    <h1>Historique des participations</h1>
+
+    <!-- STATS GLOBALES -->
+    <div class="history-stats">
+        <div class="stat-card">
+            <span>Total</span>
+            <strong>{{ total_plays }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Gains</span>
+            <strong>{{ total_wins }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Perdus</span>
+            <strong>{{ total_losses }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Taux de gain</span>
+            <strong>{{ win_rate }}%</strong>
+        </div>
+    </div>
+
+    <!-- GRAPHIQUE SIMPLE -->
+    <div class="admin-section-card">
+        <h3>Vue rapide</h3>
+
+        <div class="history-chart-wrap">
+            <div class="history-chart-row">
+                <div class="history-chart-label">Gains</div>
+                <div class="history-chart-bar-bg">
+                    <div
+                        class="history-chart-bar history-chart-bar-win"
+                        style="width: {{ win_rate }}%;"
+                    ></div>
+                </div>
+                <div class="history-chart-value">{{ total_wins }}</div>
+            </div>
+
+            <div class="history-chart-row">
+                <div class="history-chart-label">Perdus</div>
+                <div class="history-chart-bar-bg">
+                    <div
+                        class="history-chart-bar history-chart-bar-lose"
+                        style="width: {{ (100 - win_rate) if total_plays else 0 }}%;"
+                    ></div>
+                </div>
+                <div class="history-chart-value">{{ total_losses }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOPS -->
+    <div class="history-top-grid">
+        <div class="admin-section-card">
+            <h3>Top cadeaux gagnés</h3>
+            {% if top_gifts %}
+                <div class="history-top-list">
+                    {% for gift in top_gifts %}
+                    <div class="history-top-item">
+                        <span>{{ gift.reward_title }}</span>
+                        <strong>{{ gift.total }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="result-note">Aucun gain enregistré pour le moment.</p>
+            {% endif %}
+        </div>
+
+        <div class="admin-section-card">
+            <h3>Top clients</h3>
+            {% if top_clients %}
+                <div class="history-top-list">
+                    {% for client in top_clients %}
+                    <div class="history-top-item">
+                        <span>{{ client.first_name }} {{ client.last_name }}</span>
+                        <strong>{{ client.total }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="result-note">Aucune participation enregistrée pour le moment.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- DISTINCTION PAR LISTE -->
+    <div class="admin-section-card">
+        <h3>Résultats par liste</h3>
+
+        <div class="admin-table-wrap">
+            <table>
+                <tr>
+                    <th>Liste</th>
+                    <th>Participations</th>
+                    <th>Gains</th>
+                    <th>Perdus</th>
+                    <th>Taux de gain</th>
+                </tr>
+                {% for row in list_stats %}
+                <tr>
+                    <td><strong>{{ row.gift_list_name }}</strong></td>
+                    <td>{{ row.total_plays }}</td>
+                    <td>{{ row.total_wins }}</td>
+                    <td>{{ row.total_losses }}</td>
+                    <td>{{ row.win_rate }}%</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <!-- FILTRES -->
+    <div class="admin-section-card">
+        <div class="history-filters">
+            <input type="text" id="historySearch" placeholder="Rechercher nom, email, cadeau..." class="history-search">
+
+            <select id="historyStatus" class="admin-select">
+                <option value="all">Tous</option>
+                <option value="win">Gagné</option>
+                <option value="lose">Perdu</option>
+                <option value="expired">Expiré</option>
+            </select>
+
+            <select id="historyListFilter" class="admin-select">
+                <option value="all">Toutes les listes</option>
+                {% for row in list_stats %}
+                    <option value="{{ row.gift_list_name|lower }}">{{ row.gift_list_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- TABLE HISTORIQUE -->
+    <div class="admin-table-wrap">
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Email</th>
+                <th>Liste</th>
+                <th>Cadeau</th>
+                <th>Code</th>
+                <th>Échéance</th>
+                <th>Statut</th>
+            </tr>
+
+            {% for row in data %}
+            <tr
+                class="history-row"
+                data-search="{{ (row.first_name ~ ' ' ~ row.last_name ~ ' ' ~ row.email ~ ' ' ~ row.reward_title ~ ' ' ~ (row.gift_list_name or '') ~ ' ' ~ (row.expires_at or ''))|lower }}"
+                data-status="{% if row.result_type == 'win' and row.expires_at and row.expires_at < now %}expired{% else %}{{ row.result_type }}{% endif %}"
+                data-list="{{ (row.gift_list_name or '')|lower }}"
+            >
+                <td>{{ row.played_at }}</td>
+                <td>{{ row.first_name }} {{ row.last_name }}</td>
+                <td>{{ row.email }}</td>
+                <td>
+                    <span class="history-list-badge">
+                        {{ row.gift_list_name or '—' }}
+                    </span>
+                </td>
+                <td>{{ row.reward_title }}</td>
+                <td>{{ row.reward_code or '—' }}</td>
+
+                <td>
+                    {% if row.result_type == "win" and row.expires_at %}
+                        <div class="history-expiry-cell">
+                            <div>{{ row.expires_at }}</div>
+                            {% if row.expires_at < now %}
+                                <span class="history-expiry-badge expired-badge">Expiré</span>
+                            {% else %}
+                                <span class="history-expiry-badge active-badge">Valide</span>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if row.result_type == "win" %}
+                        {% if row.expires_at and row.expires_at < now %}
+                            <span class="status-expired">Expiré</span>
+                        {% else %}
+                            <span class="status-win">Gagné</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="status-lose">Perdu</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</div>
+
+<script>
+const searchInput = document.getElementById("historySearch");
+const statusFilter = document.getElementById("historyStatus");
+const listFilter = document.getElementById("historyListFilter");
+const rows = document.querySelectorAll(".history-row");
+
+function filterHistory() {
+    const search = (searchInput.value || "").toLowerCase();
+    const status = statusFilter.value;
+    const listValue = listFilter.value;
+
+    rows.forEach(row => {
+        const text = row.dataset.search || "";
+        const rowStatus = row.dataset.status || "";
+        const rowList = row.dataset.list || "";
+
+        const matchSearch = text.includes(search);
+        const matchStatus = status === "all" || rowStatus === status;
+        const matchList = listValue === "all" || rowList === listValue;
+
+        row.style.display = (matchSearch && matchStatus && matchList) ? "" : "none";
+    });
+}
+
+searchInput.addEventListener("input", filterHistory);
+statusFilter.addEventListener("change", filterHistory);
+listFilter.addEventListener("change", filterHistory);
+</script>
+
+</body>
+</html>

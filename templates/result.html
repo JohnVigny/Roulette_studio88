@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résultat</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at top, #14527a, #0f3c5b 60%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    align-items: center;
+}
+
+.header {
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(135deg, #b68d43, #e5c97a);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header img {
+    height: 80px;
+}
+
+.container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    margin: 0;
+}
+
+.reward-img {
+    max-width: 300px;
+    border-radius: 10px;
+}
+
+.code {
+    background: black;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.btn {
+    background: linear-gradient(135deg, #b68d43, #e5c97a);
+    color: black;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <img src="/static/logo.png">
+</div>
+
+<div class="container">
+
+    {% if play.result_type == "win" %}
+        <h1>🎉 Félicitations {{ play.first_name }} ! 🎉 </h1>
+        <p>Vous avez gagné :</p>
+
+        <h2>{{ play.reward_title }}</h2>
+
+        {% if play.image_path %}
+            <img src="{{ play.image_path }}" class="reward-img">
+        {% endif %}
+
+        {% if play.description %}
+            <p>{{ play.description }}</p>
+        {% endif %}
+
+        <div class="code">
+            Code : {{ play.reward_code }}
+        </div>
+
+        {% if play.expires_at %}
+            <p style="opacity:0.7;">
+                Valable jusqu'au {{ play.expires_at }}
+            </p>
+        {% endif %}
+
+    {% else %}
+        <h1>😅 Dommage {{ play.first_name }}...</h1>
+        <p>Retentez votre chance prochainement.</p>
+    {% endif %}
+
+    <!-- 👇 bouton avis UNIQUEMENT si pas déjà une roulette avis -->
+    {% if play.source != "review" %}
+        <a class="btn"
+           href="https://www.google.com/search?hl=fr-FR&gl=fr&q=Le+Studio+88,+4+rue+de+la+mairie,+30980+Langlade&ludocid=18165773872058183501&lsig=AB86z5XNKbUa7vvpPoIqQGR87Hgr#lrd=0x12b42f36d2b48eed:0xfc19cb171a19af4d,3"
+           target="_blank">
+            Laisser un avis ⭐
+        </a>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

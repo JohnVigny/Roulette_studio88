@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prévisualisation roue - {{ gift_list.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="page-bg"></div>
+
+    <main class="preview-layout">
+        <div class="preview-topbar">
+            <a href="/admin/gifts/{{ gift_list.id }}" class="gold-button">Retour à la liste</a>
+        </div>
+
+        <div class="preview-header">
+            <h1>Prévisualisation de la roue</h1>
+            <p class="subtitle">{{ gift_list.name }}</p>
+        </div>
+
+        <section class="wheel-panel-centered preview-wheel-panel">
+            <div class="wheel-stage">
+                <div class="pointer"></div>
+
+                <div class="wheel-shell large-wheel">
+                    <div class="wheel-center-glow"></div>
+
+                    <div class="wheel" style="background: {{ wheel_gradient if wheel_gradient else '#111' }};">
+                        {% for gift in wheel_items %}
+                        <div class="wheel-label" style="transform: translate(-50%, -50%) rotate({{ gift.center_angle_css }}deg);">
+                            <div class="wheel-label-text">
+                                {{ gift.title_html | safe }}
+                            </div>
+
+                            {% if gift.icon_path %}
+                            <div class="wheel-icon-wrap">
+                                <img src="{{ gift.icon_path }}" alt="{{ gift.title }}">
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="wheel-cap"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

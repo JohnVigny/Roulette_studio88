@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio 88 - Roulette</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="page-bg"></div>
+
+    <main class="homepage-layout">
+        <div class="top-branding">
+            <div class="logo-banner">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Studio 88" class="logo">
+            </div>
+
+            <h1 class="main-title gold-title">La roue des cadeaux</h1>
+            <p class="intro centered-intro">
+                {% if gift_list %}
+                    {% if review_mode %}
+                        Merci pour votre avis {{ prenom }}. <br>
+                        Vous pouvez maintenant lancer la roue et découvrir votre cadeau.
+                    {% else %}
+                        Tentez votre chance et découvrez le cadeau que le studio vous réserve.
+                    {% endif %}
+                {% else %}
+                    Aucune liste active n’est disponible pour le moment.
+                {% endif %}
+            </p>
+        </div>
+
+        {% if gift_list %}
+        <form method="POST" action="/spin" class="inline-form-card compact-form-card" id="spinForm">
+            <input type="hidden" name="list_id" value="{{ gift_list.id }}">
+            <input type="hidden" name="review_mode" value="{{ '1' if review_mode else '0' }}">
+
+            {% if review_mode %}
+                <input type="hidden" name="nom" value="{{ nom if nom else '' }}">
+                <input type="hidden" name="prenom" value="{{ prenom if prenom else '' }}">
+                <input type="hidden" name="email" value="{{ email if email else '' }}">
+
+                <button type="submit" class="gold-button centered-button" id="launchButton" {% if not can_spin %}disabled{% endif %}>
+                    Lancer la roue
+                </button>
+            {% else %}
+        
+
+                <button type="submit" class="launch-button centered-button" id="launchButton" {% if not can_spin %}disabled{% endif %}>
+                    Lancer la roue
+                </button>
+            {% endif %}
+        </form>
+        {% endif %}
+
+        <section class="wheel-panel-centered">
+            <div class="wheel-stage">
+                <div class="pointer"></div>
+
+                <div class="wheel-shell large-wheel">
+                    <div class="wheel-center-glow"></div>
+
+                   <div class="wheel" id="wheel" style="background: {{ wheel_gradient if wheel_gradient else '#111' }};">
+                        {% for gift in wheel_items %}
+                        <div class="wheel-label" style="--angle: {{ gift.center_angle }}deg;">
+                            <div class="wheel-label-text">
+                                {{ gift.title_html | safe }}
+                            </div>
+
+                            {% if gift.icon_path %}
+                            <div class="wheel-icon-wrap">
+                                <img src="{{ gift.icon_path }}" alt="{{ gift.title }}">
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="wheel-cap"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <p>Copyright John Vigny - 2026</p>
+    </footer>
+
+    <audio id="spinSound" preload="auto">
+        <source src="{{ url_for('static', filename='spin.mp3') }}" type="audio/mpeg">
+    </audio>
+
+    <audio id="winSound" preload="auto">
+        <source src="{{ url_for('static', filename='win.mp3') }}" type="audio/mpeg">
+    </audio>
+
+    <audio id="loseSound" preload="auto">
+        <source src="{{ url_for('static', filename='lose.mp3') }}" type="audio/mpeg">
+    </audio>
+
+   <script>
+        window.spinData = {
+            reward: {{ spin_result|tojson if spin_result else 'null' }},
+            angle: {{ spin_angle|tojson if spin_angle is defined else 'null' }},
+            segmentAngle: {{ spin_segment_angle|tojson if spin_segment_angle is defined else 'null' }},
+            index: {{ spin_index|tojson if spin_index is defined else 'null' }},
+            playId: {{ spin_play_id|tojson if spin_play_id else 'null' }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

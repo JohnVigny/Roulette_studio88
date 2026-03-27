@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lancer la roue</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="page-bg"></div>
+
+<main class="homepage-layout">
+    
+    <div class="top-branding">
+        <div class="logo-banner">
+            <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+        </div>
+
+        <h1 class="main-title gold-title">
+            Tentez votre chance 🎁
+        </h1>
+
+        <p class="intro centered-intro">
+            Une surprise vous attend… Lancez la roue et découvrez votre cadeau.
+        </p>
+    </div>
+
+    <div class="inline-form-card compact-form-card">
+        <form method="POST" action="/spin/{{ code }}">
+            <p style="text-align:center; color: var(--muted); margin-bottom:10px;">
+                ⚠️ Une seule participation possible
+            </p>
+            <button class="launch-button centered-button">
+                🎯 Lancer la roue
+            </button>
+        </form>
+    </div>
+
+</main>
+
+<footer class="site-footer">
+    <p>Copyright John Vigny – 2026</p>
+</footer>
+
+</body>
+</html>

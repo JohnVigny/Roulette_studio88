@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ gift_list.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="admin-container admin-list-detail-page">
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="success-message">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="admin-topbar admin-detail-topbar">
+        <a href="/admin/gifts" class="gold-button admin-top-button" id="backToListsButton">Retour aux listes</a>
+
+        <div class="topbar-actions">
+            <a href="/admin/gifts/{{ gift_list.id }}/preview" class="gold-button admin-top-button">Prévisualiser</a>
+            <button type="button" class="gold-button admin-top-button" id="saveButtonTop">Enregistrer</button>
+        </div>
+    </div>
+
+    <h1>{{ gift_list.name }}</h1>
+
+    <form method="POST" enctype="multipart/form-data" class="create-gift-form admin-section-card">
+        <input type="hidden" name="action" value="create_gift">
+
+        <h3>Ajouter un cadeau</h3>
+
+        <div class="admin-inline-form admin-inline-form-new-gift">
+            <input type="text" id="newGiftTitle" name="new_title" placeholder="Nom">
+            <input type="text" id="newGiftCode" name="new_code" placeholder="Code">
+            <input type="text" id="newGiftDescription" name="new_description" placeholder="Descriptif cadeau">
+
+            <div class="file-input-group">
+                <label for="newGiftImage" class="file-input-label">Image gain</label>
+                <input type="file" id="newGiftImage" name="new_image_file" accept="image/*">
+            </div>
+
+            <div class="file-input-group">
+                <label for="newGiftIcon" class="file-input-label">Icône roue</label>
+                <input type="file" id="newGiftIcon" name="new_icon_file" accept="image/*">
+            </div>
+
+            <div class="slider-group">
+                <label for="new_weight_0">Probabilité</label>
+                <input type="range" id="new_weight_0" name="new_weight" min="0" max="100" value="10" oninput="document.getElementById('newWeightOutput').value = this.value">
+                <output id="newWeightOutput">10</output>
+            </div>
+
+            <label class="gift-checkbox">
+                <input type="checkbox" id="newGiftActive" name="new_active" checked>
+                Actif
+            </label>
+
+            <button type="submit" class="gold-button">Créer</button>
+        </div>
+    </form>
+
+    <form method="POST" id="giftListForm" enctype="multipart/form-data" class="admin-section-card">
+        <input type="hidden" name="action" value="save_list">
+        <input type="hidden" name="return_after_save" id="return_after_save" value="0">
+
+        <h3>Gérer les cadeaux</h3>
+
+        <div class="admin-table-wrap">
+            <table id="giftsTable">
+                <tr>
+                    <th>Nom</th>
+                    <th>Code</th>
+                    <th>Descriptif</th>
+                    <th>Image</th>
+                    <th>Icône roue</th>
+                    <th>Probabilité</th>
+                    <th>Actif</th>
+                    <th>Action</th>
+                    <th>Supprimer</th>
+                </tr>
+
+                {% for gift in gifts %}
+                <tr class="gift-row-table" data-row-id="{{ gift.id }}">
+                    <td>
+                        <input type="hidden" name="gift_id[]" value="{{ gift.id }}">
+                        <input type="hidden" name="delete_id[]" value="" class="delete-id-field">
+                        <input type="hidden" name="current_image_path[]" value="{{ gift.image_path or '' }}">
+                        <input type="hidden" name="current_icon_path[]" value="{{ gift.icon_path or '' }}">
+                        <input type="text" name="title[]" value="{{ gift.title }}" class="gift-field" disabled required>
+                    </td>
+
+                    <td>
+                        <input type="text" name="code[]" value="{{ gift.code or '' }}" class="gift-field" disabled>
+                    </td>
+
+                    <td>
+                        <input type="text" name="description[]" value="{{ gift.description or '' }}" class="gift-field" disabled>
+                    </td>
+
+                    <td>
+                        <div class="gift-image-cell">
+                            {% if gift.image_path %}
+                                <div class="gift-image-preview-wrap">
+                                    <button type="button" class="gift-image-button">
+                                        <img
+                                            src="{{ gift.image_path }}"
+                                            alt="{{ gift.title }}"
+                                            class="gift-image-preview clickable-preview"
+                                            data-full-image="{{ gift.image_path }}"
+                                            data-image-title="{{ gift.title }}"
+                                        >
+                                    </button>
+                                </div>
+                            {% endif %}
+
+                            <label class="replace-image-button hidden-replace-button">
+                                Remplacer
+                                <input type="file" name="image_file_{{ gift.id }}" class="gift-field hidden-file-input" disabled accept="image/*">
+                            </label>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="gift-image-cell">
+                            {% if gift.icon_path %}
+                                <div class="gift-image-preview-wrap">
+                                    <button type="button" class="gift-image-button">
+                                        <img
+                                            src="{{ gift.icon_path }}"
+                                            alt="{{ gift.title }} icône"
+                                            class="gift-image-preview clickable-preview"
+                                            data-full-image="{{ gift.icon_path }}"
+                                            data-image-title="{{ gift.title }} - Icône"
+                                        >
+                                    </button>
+                                </div>
+                            {% endif %}
+
+                            <label class="replace-image-button hidden-replace-button">
+                                Remplacer
+                                <input type="file" name="icon_file_{{ gift.id }}" class="gift-field hidden-file-input" disabled accept="image/*">
+                            </label>
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="slider-group table-slider">
+                            <input
+                                type="range"
+                                name="weight[]"
+                                min="0"
+                                max="100"
+                                value="{{ gift.weight }}"
+                                class="gift-field"
+                                disabled
+                                oninput="this.nextElementSibling.value = this.value"
+                            >
+                            <output>{{ gift.weight }}</output>
+                        </div>
+                    </td>
+
+                    <td>
+                        <label class="gift-checkbox">
+                            <input type="checkbox" name="active_ids[]" value="{{ gift.id }}" class="gift-field" {% if gift.is_active %}checked{% endif %} disabled>
+                            Actif
+                        </label>
+                    </td>
+
+                    <td>
+                        <button type="button" class="gold-button small-button edit-toggle-button">Modifier</button>
+                    </td>
+
+                    <td>
+                        <button type="button" class="gold-button small-button delete-row-button">Supprimer</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </form>
+
+</div>
+
+<div class="custom-modal" id="unsavedModal">
+    <div class="custom-modal-backdrop"></div>
+    <div class="custom-modal-box custom-modal-box-gold">
+        <p>La liste n'est pas enregistrée, la progression sera perdue. Voulez-vous sauvegarder ?</p>
+        <div class="custom-modal-actions">
+            <button type="button" class="dark-modal-button" id="saveAndBack">Oui</button>
+            <button type="button" class="dark-modal-button" id="backWithoutSave">Non</button>
+        </div>
+    </div>
+</div>
+
+<div class="custom-modal" id="deleteModal">
+    <div class="custom-modal-backdrop"></div>
+    <div class="custom-modal-box custom-modal-box-gold">
+        <p>Voulez-vous vraiment supprimer ce cadeau ?</p>
+        <div class="custom-modal-actions">
+            <button type="button" class="dark-modal-button" id="confirmDelete">Oui</button>
+            <button type="button" class="dark-modal-button" id="cancelDelete">Non</button>
+        </div>
+    </div>
+</div>
+
+<div class="custom-modal" id="imagePreviewModal">
+    <div class="custom-modal-backdrop"></div>
+    <div class="image-preview-modal-box dark-image-modal">
+        <button type="button" class="image-preview-close" id="closeImagePreview">×</button>
+        <img src="" alt="" id="imagePreviewFull">
+        <p id="imagePreviewTitle"></p>
+    </div>
+</div>
+
+<script>
+(function () {
+    const form = document.getElementById("giftListForm");
+    const backButton = document.getElementById("backToListsButton");
+    const saveButtonTop = document.getElementById("saveButtonTop");
+
+    const unsavedModal = document.getElementById("unsavedModal");
+    const deleteModal = document.getElementById("deleteModal");
+    const imagePreviewModal = document.getElementById("imagePreviewModal");
+
+    const saveAndBack = document.getElementById("saveAndBack");
+    const backWithoutSave = document.getElementById("backWithoutSave");
+    const confirmDelete = document.getElementById("confirmDelete");
+    const cancelDelete = document.getElementById("cancelDelete");
+    const closeImagePreview = document.getElementById("closeImagePreview");
+
+    const returnAfterSave = document.getElementById("return_after_save");
+    const imagePreviewFull = document.getElementById("imagePreviewFull");
+    const imagePreviewTitle = document.getElementById("imagePreviewTitle");
+
+    let isDirty = false;
+    let pendingDeleteRow = null;
+
+    function markDirty() {
+        isDirty = true;
+    }
+
+    function enableVisibleGiftFieldsBeforeSubmit() {
+        document.querySelectorAll(".gift-row-table").forEach(row => {
+            if (row.style.display !== "none") {
+                row.querySelectorAll(".gift-field").forEach(field => {
+                    field.disabled = false;
+                });
+            }
+        });
+    }
+
+    document.querySelectorAll("#giftListForm input").forEach(el => {
+        el.addEventListener("input", markDirty);
+        el.addEventListener("change", markDirty);
+    });
+
+    document.querySelectorAll(".edit-toggle-button").forEach(button => {
+        button.addEventListener("click", function () {
+            const row = this.closest("tr");
+            const fields = row.querySelectorAll(".gift-field");
+            const replaceButtons = row.querySelectorAll(".replace-image-button");
+            const isEditing = this.dataset.editing === "1";
+
+            if (!isEditing) {
+                fields.forEach(field => {
+                    field.disabled = false;
+                });
+                replaceButtons.forEach(btn => btn.classList.remove("hidden-replace-button"));
+                this.textContent = "Valider";
+                this.dataset.editing = "1";
+            } else {
+                fields.forEach(field => {
+                    field.disabled = true;
+                });
+                replaceButtons.forEach(btn => btn.classList.add("hidden-replace-button"));
+                this.textContent = "Modifier";
+                this.dataset.editing = "0";
+                markDirty();
+            }
+        });
+    });
+
+    document.querySelectorAll(".delete-row-button").forEach(button => {
+        button.addEventListener("click", function () {
+            pendingDeleteRow = this.closest("tr");
+            deleteModal.classList.add("show");
+        });
+    });
+
+    if (confirmDelete) {
+        confirmDelete.addEventListener("click", function () {
+            if (!pendingDeleteRow) return;
+
+            const deleteField = pendingDeleteRow.querySelector(".delete-id-field");
+            const idField = pendingDeleteRow.querySelector("input[name='gift_id[]']");
+
+            if (deleteField && idField) {
+                deleteField.value = idField.value;
+                pendingDeleteRow.style.display = "none";
+            }
+
+            pendingDeleteRow = null;
+            deleteModal.classList.remove("show");
+            markDirty();
+        });
+    }
+
+    if (cancelDelete) {
+        cancelDelete.addEventListener("click", function () {
+            pendingDeleteRow = null;
+            deleteModal.classList.remove("show");
+        });
+    }
+
+    if (deleteModal) {
+        const backdrop = deleteModal.querySelector(".custom-modal-backdrop");
+        if (backdrop) {
+            backdrop.addEventListener("click", function () {
+                pendingDeleteRow = null;
+                deleteModal.classList.remove("show");
+            });
+        }
+    }
+
+    if (saveButtonTop) {
+        saveButtonTop.addEventListener("click", function () {
+            enableVisibleGiftFieldsBeforeSubmit();
+            form.submit();
+        });
+    }
+
+    if (backButton) {
+        backButton.addEventListener("click", function (e) {
+            if (isDirty) {
+                e.preventDefault();
+                unsavedModal.classList.add("show");
+            }
+        });
+    }
+
+    if (saveAndBack) {
+        saveAndBack.addEventListener("click", function () {
+            returnAfterSave.value = "1";
+            enableVisibleGiftFieldsBeforeSubmit();
+            form.submit();
+        });
+    }
+
+    if (backWithoutSave) {
+        backWithoutSave.addEventListener("click", function () {
+            window.location.href = "/admin/gifts";
+        });
+    }
+
+    document.querySelectorAll(".clickable-preview").forEach(img => {
+        img.addEventListener("click", function () {
+            imagePreviewFull.src = this.dataset.fullImage;
+            imagePreviewFull.alt = this.dataset.imageTitle || "";
+            imagePreviewTitle.textContent = this.dataset.imageTitle || "";
+            imagePreviewModal.classList.add("show");
+        });
+    });
+
+    if (closeImagePreview) {
+        closeImagePreview.addEventListener("click", function () {
+            imagePreviewModal.classList.remove("show");
+            imagePreviewFull.src = "";
+            imagePreviewTitle.textContent = "";
+        });
+    }
+
+    if (imagePreviewModal) {
+        const imageBackdrop = imagePreviewModal.querySelector(".custom-modal-backdrop");
+        if (imageBackdrop) {
+            imageBackdrop.addEventListener("click", function () {
+                imagePreviewModal.classList.remove("show");
+                imagePreviewFull.src = "";
+                imagePreviewTitle.textContent = "";
+            });
+        }
+    }
+})();
+</script>
+
+</body>
+</html>
