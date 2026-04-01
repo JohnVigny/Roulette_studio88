@@ -229,6 +229,15 @@ def generate_unique_token():
         conn.close()
         if not exists:
             return token
+        
+def is_admin_logged_in():
+    return session.get("admin_logged_in") is True
+
+
+def require_admin():
+    if not is_admin_logged_in():
+        return redirect(url_for("admin_login"))
+    return None
 
 
 @app.route("/spin", methods=["POST"])
@@ -558,15 +567,6 @@ def admin_links():
 
             if first_name and last_name and email and destination_id and gift_list_id:
                 token = generate_unique_token()
-
-                def is_admin_logged_in():
-                    return session.get("admin_logged_in") is True
-
-
-                def require_admin():
-                    if not is_admin_logged_in():
-                        return redirect(url_for("admin_login"))
-                    return None
 
                 c.execute("""
                     INSERT INTO access_links (
