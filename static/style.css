@@ -1691,3 +1691,28 @@ body {
 }
 }
 
+.admin-logout-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+
+    padding: 8px 14px;
+    font-size: 13px;
+
+    background: linear-gradient(135deg, #caa85c, #b68d43);
+    color: #0f3c5b;
+
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 600;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+
+    transition: all 0.2s ease;
+    z-index: 999;
+}
+
+.admin-logout-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
