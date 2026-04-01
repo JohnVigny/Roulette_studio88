@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, abort, session
 import sqlite3
 import random
 import os
@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = "studio88-admin-secret"
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "studio88-admin-temp")
 
 DB_NAME = "database.db"
 UPLOAD_FOLDER = "static/uploads"
@@ -334,14 +335,40 @@ def result():
         expires_in_days=expires_in_days
     )
 
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        password = request.form.get("password", "")
+
+        if password == ADMIN_PASSWORD:
+            session["admin_logged_in"] = True
+            return redirect(url_for("admin_home"))
+
+        flash("Mot de passe incorrect")
+
+    return render_template("admin_login.html")
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("admin_logged_in", None)
+    return redirect(url_for("admin_login"))
 
 @app.route("/admin")
 def admin_home():
+    guard = require_admin()
+    if guard:
+        return guard
+    
     return render_template("admin_home.html")
 
 
 @app.route("/admin/gifts", methods=["GET", "POST"])
 def admin_gifts():
+    guard = require_admin()
+    if guard:
+        return guard
+
     conn = get_db()
     c = conn.cursor()
 
@@ -372,6 +399,10 @@ def admin_gifts():
 
 @app.route("/admin/gifts/<int:list_id>", methods=["GET", "POST"])
 def admin_gift_list(list_id):
+    guard = require_admin()
+    if guard:
+        return guard
+    
     conn = get_db()
     c = conn.cursor()
 
@@ -489,6 +520,9 @@ def admin_gift_list(list_id):
 @app.route("/admin/gifts/<int:list_id>/preview")
 def admin_gift_list_preview(list_id):
     gift_list = get_gift_list_by_id(list_id)
+    guard = require_admin()
+    if guard:
+        return guard
 
     if not gift_list:
         return redirect(url_for("admin_gifts"))
@@ -506,6 +540,9 @@ def admin_gift_list_preview(list_id):
 
 @app.route("/admin/links", methods=["GET", "POST"])
 def admin_links():
+    guard = require_admin()
+    if guard:
+        return guard
     conn = get_db()
     c = conn.cursor()
 
@@ -521,6 +558,15 @@ def admin_links():
 
             if first_name and last_name and email and destination_id and gift_list_id:
                 token = generate_unique_token()
+
+                def is_admin_logged_in():
+                    return session.get("admin_logged_in") is True
+
+
+                def require_admin():
+                    if not is_admin_logged_in():
+                        return redirect(url_for("admin_login"))
+                    return None
 
                 c.execute("""
                     INSERT INTO access_links (
@@ -808,6 +854,10 @@ def private_spin_action(token):
 
 @app.route("/admin/history")
 def admin_history():
+    guard = require_admin()
+    if guard:
+        return guard
+    
     conn = get_db()
     c = conn.cursor()
 

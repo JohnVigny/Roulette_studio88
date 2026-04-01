@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="admin-container" style="max-width: 520px; margin-top: 80px;">
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="success-message">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="admin-section-card" style="text-align:center;">
+        <h1>Administration</h1>
+        <p class="result-note">Entrez le mot de passe pour accéder au back-office.</p>
+
+        <form method="POST" style="margin-top: 24px; display:flex; flex-direction:column; gap:14px;">
+            <input
+                type="password"
+                name="password"
+                placeholder="Mot de passe"
+                required
+            >
+            <button type="submit" class="gold-button">Se connecter</button>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>
